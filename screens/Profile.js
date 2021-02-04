@@ -29,6 +29,8 @@ class Profile extends React.Component {
       }
    }
 
+   componentDidMount = () => {}
+
    handleSignout = () => {
       Firebase.auth().signOut()
       this.props.navigation.navigate("Login")
@@ -46,13 +48,10 @@ class Profile extends React.Component {
          lng: this.state.search.geometry["location"].lat,
       }
 
-      // Set read status on notifications against the userId
-      firebase
-         .database()
-         .ref(`favourites/${this.state.search.place_id}/`)
-         .update({
-            ...this.state.search,
-         })
+      Firebase.firestore()
+         .collection("favourites")
+         .doc(this.state.search.place_id)
+         .set({ ...this.state.search })
    }
 
    render() {
