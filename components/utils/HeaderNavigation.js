@@ -13,12 +13,33 @@ export default class BackgroundImage extends Component {
       Firebase.auth().signOut()
       this.props.screenProps.navigation.navigate("Login")
    }
+   handleNotifications = () => {
+      this.props.screenProps.navigation.navigate("PushNotifications")
+   }
    render() {
       return (
          <View style={[styles.container, { backgroundColor: "#000" }]}>
             <Header
+               leftComponent={
+                  <Ionicons
+                     onPress={() => {
+                        this.handleNotifications
+                     }}
+                     name="bell"
+                     type="font-awesome"
+                     color="#fff"
+                     style={{
+                        top: 0,
+                        left: 0,
+                        fontSize: 28,
+                        paddingLeft: 10,
+                        paddingRight: 20,
+                        paddingTop: Platform.OS === "ios" ? 15 : null,
+                     }}
+                  />
+               }
                centerComponent={{
-                  text: "Search you favourite places",
+                  text: "Bookmark Favourite Places",
                   style: {
                      color: "#fff",
                      fontSize: 18,

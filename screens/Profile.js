@@ -7,32 +7,68 @@ import {
    Image,
    Dimensions,
    SafeAreaView,
+   Linking,
 } from "react-native"
 import { connect } from "react-redux"
 import Firebase from "../config/Firebase"
 import MapInput from "../components/map/mapInput"
 import globalStyles from "../assets/styles/index"
 import HeaderNavigation from "../components/utils/HeaderNavigation"
-import { Card, Button } from "react-native-elements"
+import { Card, Button, ListItem } from "react-native-elements"
 import Ionicons from "react-native-vector-icons/Entypo"
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps"
 
 const { width, height } = Dimensions.get("window")
 const ASPECT_RATIO = width / height
 const LATITUDE_DELTA = 1
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO
 
+const screenWidth = Dimensions.get("window").width
+const screenHeight = Dimensions.get("window").height
+
 class Profile extends React.Component {
    constructor(props) {
       super(props)
       this.state = {
          search: null,
+         favourites: [],
+         region: {},
       }
    }
 
-   componentDidMount = () => {}
+   componentDidMount = () => {
+      this.getData()
+   }
+
+   getData = async () => {
+      let userId = Firebase.auth().currentUser.uid
+      const ArrayData = []
+      Firebase.firestore()
+         .collection("users")
+         .doc(userId)
+         .collection("id")
+         .get()
+         .then((snapshot) => {
+            snapshot.forEach((doc) => {
+               ArrayData.push(doc.data())
+            })
+         })
+         .then(() => {
+            this.setState({ favourites: ArrayData })
+            console.log(
+               "🚀 ~ file: Profile.js ~ line 121 ~ Profile ~ .then ~ ArrayData",
+               ArrayData
+            )
+            this.setState({ search: null })
+         })
+         .catch((error) => {
+            console.error("Error response: ", error)
+         })
+   }
 
    handleSignout = () => {
       Firebase.auth().signOut()
+      //Firebase.messaging().unsubscribeFromTopic("loggedout")
       this.props.navigation.navigate("Login")
    }
 
@@ -43,32 +79,37 @@ class Profile extends React.Component {
    }
 
    addFavourite = async () => {
-      const location = {
+      let userId = Firebase.auth().currentUser.uid
+
+      const addData = {
          lat: this.state.search.geometry["location"].lat,
-         lng: this.state.search.geometry["location"].lat,
+         lng: this.state.search.geometry["location"].lng,
+         ...this.state.search,
       }
 
       Firebase.firestore()
-         .collection("favourites")
+         .collection("users")
+         .doc(userId)
+         .collection("id")
          .doc(this.state.search.place_id)
-         .set({ ...this.state.search })
+         .set(addData)
+         .then(() => {
+            this.getData()
+         })
    }
 
    render() {
       return (
          <View style={globalStyles.wrapperDefault}>
             <View style={globalStyles.containerCenter}>
-               <HeaderNavigation />
+               <HeaderNavigation screenProps={this.props} />
             </View>
-            <MapInput notifyChange={(loc) => this.getCoordsFromName(loc)} />
-
-            {/* <Text>
-               Hello
-               {this.state.search ? this.state.search.description : null}
-            </Text> */}
+            <View style={globalStyles.containerCenter}>
+               <MapInput notifyChange={(loc) => this.getCoordsFromName(loc)} />
+            </View>
 
             {this.state.search && this.state.search.place_id ? (
-               <View>
+               <SafeAreaView>
                   <Card title="Address details">
                      <Text>
                         Name:
@@ -79,14 +120,60 @@ class Profile extends React.Component {
                         Address:
                         {this.state.search.formatted_address}
                      </Text>
-                     <Text>
-                        Latitude:
-                        {this.state.search.geometry["location"].lat}
-                     </Text>
-                     <Text>
-                        Longitude:
-                        {this.state.search.geometry["location"].lng}
-                     </Text>
+
+                     {this.state.search.business_status ? (
+                        <Text>
+                           Business status:
+                           {this.state.search.business_status}
+                        </Text>
+                     ) : null}
+
+                     <Button
+                        icon={<Ionicons name="phone" color="#ffffff" />}
+                        title="Make a call"
+                        buttonStyle={{
+                           borderRadius: 0,
+                           marginLeft: 0,
+                           marginRight: 0,
+                           marginBottom: 0,
+                           marginTop: 20,
+                           backgroundColor: "#1A8A3C",
+                        }}
+                        onPress={() =>
+                           Linking.openURL(
+                              `tel:${this.state.search.international_phone_number}`
+                           )
+                        }
+                     ></Button>
+
+                     {this.state.search && this.state.search.geometry ? (
+                        <MapView
+                           ref="map"
+                           style={styles.mapContainer}
+                           provider={PROVIDER_GOOGLE}
+                           region={{
+                              latitude: this.state.search.geometry["location"]
+                                 .lat,
+                              longitude: this.state.search.geometry["location"]
+                                 .lng,
+                              latitudeDelta: LATITUDE_DELTA,
+                              longitudeDelta: LATITUDE_DELTA,
+                           }}
+                        >
+                           <Marker
+                              coordinate={{
+                                 latitude: this.state.search.geometry[
+                                    "location"
+                                 ].lat,
+                                 longitude: this.state.search.geometry[
+                                    "location"
+                                 ].lng,
+                              }}
+                              title={this.state.search.name}
+                              description={this.state.search.formatted_address}
+                           />
+                        </MapView>
+                     ) : null}
 
                      <Button
                         icon={<Ionicons name="plus" color="#ffffff" />}
@@ -103,14 +190,46 @@ class Profile extends React.Component {
                         }}
                      ></Button>
                   </Card>
-               </View>
+               </SafeAreaView>
+            ) : null}
+
+            {this.state.favourites && this.state.favourites.length > 0 ? (
+               <ScrollView>
+                  {this.state.favourites.map((l, i) => (
+                     <ListItem
+                        rightIcon={{
+                           name: "chevron-right",
+                           type: "font-awesome",
+                        }}
+                        subtitle={l.formatted_address}
+                        key={i}
+                        leftAvatar={{
+                           source: { uri: l.icon },
+                        }}
+                        title={l.name}
+                        subtitle={l.subtitle}
+                        bottomDivider
+                        onPress={() => {
+                           Linking.openURL(l.url)
+                        }}
+                     />
+                  ))}
+               </ScrollView>
             ) : null}
          </View>
       )
    }
 }
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+   mapContainer: {
+      marginTop: 20,
+      height: 150,
+      width: "100%",
+      justifyContent: "flex-end",
+      alignItems: "center",
+   },
+})
 
 const mapStateToProps = (state) => {
    return {
