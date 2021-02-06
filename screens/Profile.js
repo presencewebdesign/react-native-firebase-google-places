@@ -46,7 +46,7 @@ class Profile extends React.Component {
       Firebase.firestore()
          .collection("users")
          .doc(userId)
-         .collection("id")
+         .collection("place_id")
          .get()
          .then((snapshot) => {
             snapshot.forEach((doc) => {
@@ -90,7 +90,7 @@ class Profile extends React.Component {
       Firebase.firestore()
          .collection("users")
          .doc(userId)
-         .collection("id")
+         .collection("place_id")
          .doc(this.state.search.place_id)
          .set(addData)
          .then(() => {
@@ -128,23 +128,41 @@ class Profile extends React.Component {
                         </Text>
                      ) : null}
 
-                     <Button
-                        icon={<Ionicons name="phone" color="#ffffff" />}
-                        title="Make a call"
-                        buttonStyle={{
-                           borderRadius: 0,
-                           marginLeft: 0,
-                           marginRight: 0,
-                           marginBottom: 0,
-                           marginTop: 20,
-                           backgroundColor: "#1A8A3C",
-                        }}
-                        onPress={() =>
-                           Linking.openURL(
-                              `tel:${this.state.search.international_phone_number}`
-                           )
-                        }
-                     ></Button>
+                     {this.state.search.international_phone_number ? (
+                        <View>
+                           <Text>
+                              Phone number:
+                              {this.state.search.international_phone_number}
+                           </Text>
+
+                           <Button
+                              icon={
+                                 <Ionicons
+                                    style={{
+                                       fontSize: 25,
+                                       paddingRight: 10,
+                                    }}
+                                    name="phone"
+                                    color="#ffffff"
+                                 />
+                              }
+                              title="Make a call"
+                              buttonStyle={{
+                                 borderRadius: 0,
+                                 marginLeft: 0,
+                                 marginRight: 0,
+                                 marginBottom: 0,
+                                 marginTop: 20,
+                                 backgroundColor: "#1A8A3C",
+                              }}
+                              onPress={() =>
+                                 Linking.openURL(
+                                    `tel:${this.state.search.international_phone_number}`
+                                 )
+                              }
+                           ></Button>
+                        </View>
+                     ) : null}
 
                      {this.state.search && this.state.search.geometry ? (
                         <MapView
@@ -176,7 +194,16 @@ class Profile extends React.Component {
                      ) : null}
 
                      <Button
-                        icon={<Ionicons name="plus" color="#ffffff" />}
+                        icon={
+                           <Ionicons
+                              style={{
+                                 fontSize: 25,
+                                 paddingRight: 10,
+                              }}
+                              name="plus"
+                              color="#ffffff"
+                           />
+                        }
                         title="Add to Favourites"
                         buttonStyle={{
                            borderRadius: 0,
