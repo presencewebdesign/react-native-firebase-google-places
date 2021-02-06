@@ -22,6 +22,7 @@ class Login extends React.Component {
          if (user) {
             this.props.getUser(user.uid)
             if (this.props.user) {
+               //Firebase.messaging().subscribeToTopic("loggedin")
                this.props.navigation.navigate("Profile")
             }
          }
