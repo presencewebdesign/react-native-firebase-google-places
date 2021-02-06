@@ -1,5 +1,5 @@
 import React, { Component } from "react"
-import { TouchableOpacity, SafeAreaView } from "react-native"
+import { TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome"
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete"
 
@@ -16,7 +16,7 @@ class MapInput extends Component {
             //predefinedPlaces={[homePlace]}
             placeholder="Search"
             minLength={2}
-            autoFocus={true}
+            autoFocus={false}
             returnKeyType={"search"}
             listViewDisplayed={"auto"}
             fetchDetails={true}
